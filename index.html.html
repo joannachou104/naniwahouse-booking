@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>浪速空間 預約系統</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1410;
+    --paper: #faf8f4;
+    --warm: #c8a96e;
+    --warm-light: #f0e8d8;
+    --warm-dark: #8b6e3a;
+    --muted: #7a6e62;
+    --border: #d4c9b8;
+    --room-a: #4a7c6b;
+    --room-b: #5a6b8c;
+    --office: #8c5a4a;
+    --success: #3d7a5a;
+    --danger: #8c3a3a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    font-weight: 300;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 2rem 1.5rem 1.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 40px,
+      rgba(200,169,110,0.04) 40px,
+      rgba(200,169,110,0.04) 41px
+    );
+  }
+  header h1 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    position: relative;
+  }
+  header .sub {
+    font-size: 0.75rem;
+    color: var(--warm);
+    letter-spacing: 0.3em;
+    margin-top: 0.4rem;
+    text-transform: uppercase;
+    position: relative;
+  }
+  .gold-line {
+    width: 40px;
+    height: 1px;
+    background: var(--warm);
+    margin: 0.8rem auto;
+    position: relative;
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: white;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 0.9rem 1rem;
+    border: none;
+    background: none;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--muted);
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    color: var(--ink);
+    border-bottom-color: var(--warm);
+    font-weight: 500;
+  }
+
+  /* PANELS */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* BOOKING FORM */
+  .form-container {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 1.5rem 1.25rem 2rem;
+  }
+
+  .section-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--warm-dark);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .form-section { margin-bottom: 1.5rem; }
+
+  /* SPACE PICKER */
+  .space-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  .space-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+    position: relative;
+    overflow: hidden;
+  }
+  .space-card:hover { border-color: var(--warm); }
+  .space-card.selected {
+    border-color: var(--warm);
+    background: var(--warm-light);
+  }
+  .space-card.full {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  .space-card .space-accent {
+    width: 3px;
+    height: 100%;
+    position: absolute;
+    left: 0; top: 0;
+    border-radius: 8px 0 0 8px;
+  }
+  .space-card.room-a .space-accent { background: var(--room-a); }
+  .space-card.room-b .space-accent { background: var(--room-b); }
+  .space-card.office .space-accent { background: var(--office); }
+  .space-card.office { grid-column: span 2; }
+  .space-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.2rem;
+    padding-left: 0.5rem;
+  }
+  .space-cap {
+    font-size: 0.72rem;
+    color: var(--muted);
+    padding-left: 0.5rem;
+  }
+  .space-avail {
+    font-size: 0.68rem;
+    margin-top: 0.4rem;
+    padding-left: 0.5rem;
+    font-weight: 500;
+  }
+  .avail-ok { color: var(--success); }
+  .avail-low { color: #b07030; }
+  .avail-full { color: var(--danger); }
+
+  /* DATE PICKER */
+  .date-input-wrap {
+    position: relative;
+  }
+  .date-input-wrap input[type="date"] {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.9rem;
+    background: white;
+    color: var(--ink);
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+  }
+  .date-input-wrap input[type="date"]:focus {
+    border-color: var(--warm);
+  }
+
+  /* PERSON COUNT */
+  .count-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .count-btn {
+    width: 36px; height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    color: var(--ink);
+  }
+  .count-btn:hover { border-color: var(--warm); background: var(--warm-light); }
+  .count-display {
+    font-size: 1.2rem;
+    font-weight: 500;
+    min-width: 2rem;
+    text-align: center;
+  }
+  .count-max { font-size: 0.75rem; color: var(--muted); margin-left: 0.5rem; }
+
+  /* INPUTS */
+  .input-group { margin-bottom: 0.85rem; }
+  .input-group label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+    letter-spacing: 0.03em;
+  }
+  .input-group input,
+  .input-group textarea {
+    width: 100%;
+    padding: 0.65rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.88rem;
+    background: white;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-group input:focus,
+  .input-group textarea:focus { border-color: var(--warm); }
+  .input-group textarea { resize: vertical; min-height: 80px; }
+
+  /* SUBMIT */
+  .submit-btn {
+    width: 100%;
+    padding: 0.9rem;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 8px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 0.5rem;
+  }
+  .submit-btn:hover { background: var(--warm-dark); }
+  .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* SUCCESS CARD */
+  .success-card {
+    background: #f0f9f4;
+    border: 1px solid #a8d8b9;
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+    display: none;
+    margin-top: 1rem;
+  }
+  .success-card .check {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+  .success-card h3 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 1.1rem;
+    color: var(--success);
+    margin-bottom: 0.5rem;
+  }
+  .success-card p { font-size: 0.82rem; color: var(--muted); }
+
+  /* ADMIN PANEL */
+  .admin-container {
+    padding: 1.25rem;
+  }
+  .admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .admin-header h2 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 1.1rem;
+    font-weight: 400;
+  }
+
+  /* LOGIN */
+  .login-box {
+    max-width: 320px;
+    margin: 3rem auto;
+    padding: 2rem 1.5rem;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    text-align: center;
+  }
+  .login-box h3 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+  .login-box input {
+    width: 100%;
+    padding: 0.65rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.88rem;
+    outline: none;
+    margin-bottom: 0.75rem;
+    transition: border-color 0.2s;
+  }
+  .login-box input:focus { border-color: var(--warm); }
+  .login-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 8px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .login-btn:hover { background: var(--warm-dark); }
+  .login-err { font-size: 0.75rem; color: var(--danger); margin-top: 0.5rem; display: none; }
+
+  /* FILTER BAR */
+  .filter-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    padding: 0.35rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: white;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.75rem;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .filter-btn.active, .filter-btn:hover {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .refresh-btn {
+    margin-left: auto;
+    padding: 0.35rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: white;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.75rem;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .refresh-btn:hover { border-color: var(--warm); color: var(--warm-dark); }
+
+  /* BOOKING CARDS */
+  .booking-list { display: flex; flex-direction: column; gap: 0.65rem; }
+  .booking-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .booking-card .bc-accent {
+    width: 3px;
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    border-radius: 10px 0 0 10px;
+  }
+  .bc-info { flex: 1; padding-left: 0.25rem; }
+  .bc-space {
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.15rem;
+  }
+  .bc-name { font-size: 0.95rem; font-weight: 500; margin-bottom: 0.2rem; }
+  .bc-date { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.2rem; }
+  .bc-details { font-size: 0.75rem; color: var(--muted); }
+  .bc-cancel {
+    padding: 0.35rem 0.65rem;
+    border: 1px solid #d4b8b8;
+    border-radius: 6px;
+    background: #fdf5f5;
+    color: var(--danger);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .bc-cancel:hover { background: var(--danger); color: white; border-color: var(--danger); }
+  .bc-status {
+    font-size: 0.68rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+  .status-confirmed { background: #e8f5ed; color: #2d7a4a; }
+  .status-cancelled { background: #f5e8e8; color: #7a2d2d; }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.65rem;
+    margin-bottom: 1rem;
+  }
+  .stat-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    text-align: center;
+  }
+  .stat-num { font-size: 1.4rem; font-weight: 500; color: var(--ink); }
+  .stat-label { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.05em; margin-top: 0.2rem; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--ink);
+    color: var(--paper);
+    padding: 0.7rem 1.4rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    letter-spacing: 0.03em;
+    transition: transform 0.3s ease;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { background: #5a1a1a; }
+
+  /* LOADING */
+  .loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--muted);
+    font-size: 0.82rem;
+    letter-spacing: 0.05em;
+  }
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--warm);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* QUERY RESULTS */
+  .query-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+    margin-bottom: 0.65rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .query-card .qc-accent {
+    width: 3px;
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    border-radius: 10px 0 0 10px;
+  }
+  .query-card .qc-body { padding-left: 0.4rem; }
+  .qc-space { font-size: 0.7rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.2rem; }
+  .qc-date  { font-size: 1rem; font-weight: 500; margin-bottom: 0.3rem; }
+  .qc-row   { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.15rem; }
+  .qc-status { display:inline-block; font-size:0.68rem; padding:0.2rem 0.5rem; border-radius:20px; font-weight:500; margin-top:0.4rem; }
+  .query-empty { text-align:center; padding:2rem 1rem; color:var(--muted); font-size:0.85rem; }
+  .query-empty .qe-icon { font-size:2rem; margin-bottom:0.5rem; }
+
+  /* CONFIG NOTICE */
+  .config-notice {
+    background: #fff8ec;
+    border: 1px solid #f0d080;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.78rem;
+    color: #7a5a10;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+  }
+  .config-notice strong { font-weight: 500; }
+  .config-notice code {
+    background: #f0d08050;
+    padding: 0.1em 0.4em;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.85em;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>浪速空間</h1>
+  <div class="gold-line"></div>
+  <div class="sub">Naniwasora · Space Booking</div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('booking')">✦ 線上預約</button>
+  <button class="tab-btn" onclick="switchTab('query')">◎ 查詢預約</button>
+  <button class="tab-btn" onclick="switchTab('admin')">⊞ 管理後台</button>
+</div>
+
+<!-- BOOKING PANEL -->
+<div id="panel-booking" class="panel active">
+  <div class="form-container">
+
+    <div class="config-notice" id="config-notice">
+      ⚙️ <strong>設定提醒：</strong>請將 <code>SCRIPT_URL</code> 換成你的 Google Apps Script 網址，才能正式啟用。
+      <a href="#" onclick="showSetupGuide()" style="color:var(--warm-dark);text-decoration:none;">查看設定說明 →</a>
+    </div>
+
+    <div class="form-section">
+      <div class="section-label">選擇空間</div>
+      <div class="space-grid">
+        <div class="space-card room-a" id="card-roomA" onclick="selectSpace('roomA')">
+          <div class="space-accent"></div>
+          <div class="space-name">一樓房間</div>
+          <div class="space-cap">1–4 人住宿</div>
+          <div class="space-avail avail-ok" id="avail-roomA">可預約</div>
+        </div>
+        <div class="space-card room-b" id="card-roomB" onclick="selectSpace('roomB')">
+          <div class="space-accent"></div>
+          <div class="space-name">二樓房間</div>
+          <div class="space-cap">1–4 人住宿</div>
+          <div class="space-avail avail-ok" id="avail-roomB">可預約</div>
+        </div>
+        <div class="space-card office" id="card-office" onclick="selectSpace('office')">
+          <div class="space-accent"></div>
+          <div class="space-name">共享辦公空間</div>
+          <div class="space-cap">最多 12 人</div>
+          <div class="space-avail avail-ok" id="avail-office">查詢中…</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-label">選擇日期</div>
+      <div class="date-input-wrap">
+        <input type="date" id="booking-date" onchange="onDateChange()" />
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-label">人數</div>
+      <div class="count-row">
+        <button class="count-btn" onclick="changeCount(-1)">−</button>
+        <div class="count-display" id="count-display">1</div>
+        <button class="count-btn" onclick="changeCount(1)">+</button>
+        <span class="count-max" id="count-max">（上限 4 人）</span>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-label">聯絡資訊</div>
+      <div class="input-group">
+        <label>姓名 *</label>
+        <input type="text" id="f-name" placeholder="請輸入姓名" />
+      </div>
+      <div class="input-group">
+        <label>服務單位</label>
+        <input type="text" id="f-unit" placeholder="所屬單位或組織（選填）" />
+      </div>
+      <div class="input-group">
+        <label>聯絡電話 *</label>
+        <input type="tel" id="f-phone" placeholder="09XX-XXX-XXX" />
+      </div>
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" id="f-email" placeholder="your@email.com" />
+      </div>
+      <div class="input-group">
+        <label>備注說明</label>
+        <textarea id="f-note" placeholder="如有特殊需求請告知…"></textarea>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submit-btn" onclick="submitBooking()">確認送出預約</button>
+
+    <div class="success-card" id="success-card">
+      <div class="check">✓</div>
+      <h3>預約成功！</h3>
+      <p id="success-detail">感謝您的預約，我們將盡快與您確認。</p>
+    </div>
+  </div>
+</div>
+
+<!-- QUERY PANEL -->
+<div id="panel-query" class="panel">
+  <div class="form-container">
+    <div class="form-section">
+      <div class="section-label">查詢我的預約</div>
+      <div class="input-group">
+        <label>聯絡電話 *</label>
+        <input type="tel" id="q-phone" placeholder="09XX-XXX-XXX" />
+      </div>
+      <div class="input-group">
+        <label>Email *</label>
+        <input type="email" id="q-email" placeholder="your@email.com" />
+      </div>
+      <button class="submit-btn" onclick="queryBooking()">查詢預約記錄</button>
+    </div>
+
+    <div id="query-result"></div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="panel-admin" class="panel">
+  <div id="admin-login">
+    <div class="login-box">
+      <h3>管理員登入</h3>
+      <input type="password" id="admin-pw" placeholder="輸入管理密碼" onkeydown="if(event.key==='Enter')adminLogin()" />
+      <button class="login-btn" onclick="adminLogin()">登入後台</button>
+      <div class="login-err" id="login-err">密碼錯誤，請再試一次</div>
+    </div>
+  </div>
+
+  <div id="admin-content" style="display:none;">
+    <div class="admin-container">
+      <div class="admin-header">
+        <h2>預約管理</h2>
+        <button style="padding:0.35rem 0.75rem;border:1px solid var(--border);border-radius:6px;background:white;font-size:0.75rem;cursor:pointer;font-family:inherit;" onclick="adminLogout()">登出</button>
+      </div>
+
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card"><div class="stat-num" id="stat-total">—</div><div class="stat-label">總預約數</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-today">—</div><div class="stat-label">今日預約</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-upcoming">—</div><div class="stat-label">未來 7 天</div></div>
+      </div>
+
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="filterBookings('all',this)">全部</button>
+        <button class="filter-btn" onclick="filterBookings('roomA',this)">房間 A</button>
+        <button class="filter-btn" onclick="filterBookings('roomB',this)">房間 B</button>
+        <button class="filter-btn" onclick="filterBookings('office',this)">辦公空間</button>
+        <button class="refresh-btn" onclick="loadBookings()">↻ 重新整理</button>
+      </div>
+
+      <div id="bookings-container">
+        <div class="loading"><span class="spinner"></span>載入中…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// ★ 請將下方網址換成你的 Google Apps Script 部署網址
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbww76fqBZEhVbtGuij2DYQlyAyJ8ioCUQG0gp2v50M4AHebSbVFhiEVXnzHKhqtkI2pCA/exec';
+// ★ 管理員密碼（建議部署後改為環境變數驗證）
+const ADMIN_PASSWORD = 'naniwasora2024';
+// ============================================================
+
+const SPACES = {
+  roomA:  { name: '一樓房間',     max: 4,  color: 'var(--room-a)', unitBased: true  },
+  roomB:  { name: '二樓房間',     max: 4,  color: 'var(--room-b)', unitBased: true  },
+  office: { name: '共享辦公空間', max: 12, color: 'var(--office)', unitBased: false }
+};
+
+let selectedSpace = null;
+let personCount = 1;
+let allBookings = [];
+let currentFilter = 'all';
+
+// Init date — 最早可選後天
+const today = new Date();
+const pad = n => String(n).padStart(2,'0');
+const dayAfterTomorrow = new Date(today);
+dayAfterTomorrow.setDate(today.getDate() + 2);
+const minDateStr = `${dayAfterTomorrow.getFullYear()}-${pad(dayAfterTomorrow.getMonth()+1)}-${pad(dayAfterTomorrow.getDate())}`;
+document.getElementById('booking-date').value = minDateStr;
+document.getElementById('booking-date').min = minDateStr;
+
+// Check if configured
+if (SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+  document.getElementById('config-notice').style.display = 'block';
+} else {
+  document.getElementById('config-notice').style.display = 'none';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`panel-${tab}`).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function selectSpace(space) {
+  selectedSpace = space;
+  document.querySelectorAll('.space-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById(`card-${space}`).classList.add('selected');
+  const sp = SPACES[space];
+  document.getElementById('count-max').textContent =
+    sp.unitBased ? `（上限 ${sp.max} 人）` : `（上限 ${sp.max} 人）`;
+  if (personCount > sp.max) {
+    personCount = sp.max;
+    document.getElementById('count-display').textContent = sp.max;
+  }
+}
+
+function changeCount(delta) {
+  const max = selectedSpace ? SPACES[selectedSpace].max : 12;
+  personCount = Math.max(1, Math.min(max, personCount + delta));
+  document.getElementById('count-display').textContent = personCount;
+}
+
+function onDateChange() {
+  const date = document.getElementById('booking-date').value;
+  if (date && SCRIPT_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    fetchAvailability(date);
+  }
+}
+
+async function fetchAvailability(date) {
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=availability&date=${date}`);
+    const data = await res.json();
+    updateAvailability(data);
+  } catch(e) {
+    // silent fail – demo mode
+  }
+}
+
+function updateAvailability(data) {
+  Object.keys(SPACES).forEach(space => {
+    const el   = document.getElementById(`avail-${space}`);
+    const card = document.getElementById(`card-${space}`);
+    const sp   = SPACES[space];
+    const val  = data[space];
+
+    if (sp.unitBased) {
+      // rooms: val is true (booked) or false/undefined (free)
+      if (val === true || val === 'booked') {
+        el.textContent = '此日已預約';
+        el.className = 'space-avail avail-full';
+        card.classList.add('full');
+        if (card.classList.contains('selected')) {
+          card.classList.remove('selected');
+          selectedSpace = null;
+        }
+      } else {
+        el.textContent = '可預約';
+        el.className = 'space-avail avail-ok';
+        card.classList.remove('full');
+      }
+    } else {
+      // office: val is remaining headcount
+      if (val === undefined || val === null) {
+        el.textContent = `尚有 ${sp.max} 個名額`;
+        el.className = 'space-avail avail-ok';
+        card.classList.remove('full');
+      } else if (val <= 0) {
+        el.textContent = '已額滿';
+        el.className = 'space-avail avail-full';
+        card.classList.add('full');
+      } else if (val <= 3) {
+        el.textContent = `僅剩 ${val} 個名額`;
+        el.className = 'space-avail avail-low';
+        card.classList.remove('full');
+      } else {
+        el.textContent = `尚有 ${val} 個名額`;
+        el.className = 'space-avail avail-ok';
+        card.classList.remove('full');
+      }
+    }
+  });
+}
+
+// Demo: set initial availability display
+['roomA','roomB'].forEach(s => {
+  const el = document.getElementById(`avail-${s}`);
+  el.textContent = '可預約';
+  el.className = 'space-avail avail-ok';
+  document.getElementById(`card-${s}`).classList.remove('full');
+});
+const officeEl = document.getElementById('avail-office');
+officeEl.textContent = `尚有 ${SPACES.office.max} 個名額`;
+officeEl.className = 'space-avail avail-ok';
+
+async function submitBooking() {
+  const name  = document.getElementById('f-name').value.trim();
+  const unit  = document.getElementById('f-unit').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const note  = document.getElementById('f-note').value.trim();
+  const date  = document.getElementById('booking-date').value;
+
+  if (!selectedSpace) return showToast('請選擇預約空間', true);
+  if (!date)          return showToast('請選擇預約日期', true);
+  if (!name)          return showToast('請填寫姓名', true);
+  if (!phone)         return showToast('請填寫聯絡電話', true);
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = '送出中…';
+
+  const payload = {
+    action: 'book',
+    space: selectedSpace,
+    spaceName: SPACES[selectedSpace].name,
+    date, personCount, name, unit, phone, email, note,
+    timestamp: new Date().toISOString()
+  };
+
+  try {
+    const params = new URLSearchParams({
+      action: 'book',
+      space:       selectedSpace,
+      spaceName:   SPACES[selectedSpace].name,
+      date,
+      personCount,
+      name,
+      unit:        unit  || '',
+      phone,
+      email:       email || '',
+      note:        note  || '',
+    });
+    const res = await fetch(`${SCRIPT_URL}?${params}`);
+    const result = await res.json();
+
+    if (result.success) {
+      showSuccess(payload);
+    } else {
+      showToast(result.error || '預約失敗，請再試一次', true);
+      btn.disabled = false;
+      btn.textContent = '確認送出預約';
+    }
+  } catch(e) {
+    showToast('發生錯誤，請再試一次', true);
+    btn.disabled = false;
+    btn.textContent = '確認送出預約';
+  }
+}
+
+function showSuccess(data) {
+  const card = document.getElementById('success-card');
+  card.style.display = 'block';
+  document.getElementById('success-detail').textContent =
+    `${data.spaceName} ・ ${data.date} ・ ${data.personCount} 人`;
+  document.getElementById('submit-btn').style.display = 'none';
+  // Reset
+  selectedSpace = null;
+  document.querySelectorAll('.space-card').forEach(c => c.classList.remove('selected'));
+  ['f-name','f-unit','f-phone','f-email','f-note'].forEach(id => document.getElementById(id).value = '');
+}
+
+// ADMIN
+function adminLogin() {
+  const pw = document.getElementById('admin-pw').value;
+  if (pw === ADMIN_PASSWORD) {
+    document.getElementById('admin-login').style.display = 'none';
+    document.getElementById('admin-content').style.display = 'block';
+    loadBookings();
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+  }
+}
+
+function adminLogout() {
+  document.getElementById('admin-login').style.display = 'block';
+  document.getElementById('admin-content').style.display = 'none';
+  document.getElementById('admin-pw').value = '';
+}
+
+async function loadBookings() {
+  document.getElementById('bookings-container').innerHTML =
+    '<div class="loading"><span class="spinner"></span>載入中…</div>';
+
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=list`);
+    allBookings = await res.json();
+    renderBookings();
+  } catch(e) {
+    document.getElementById('bookings-container').innerHTML =
+      '<div class="empty-state">載入失敗，請檢查 API 設定</div>';
+  }
+}
+
+function renderBookings() {
+  const filtered = currentFilter === 'all'
+    ? allBookings
+    : allBookings.filter(b => b.space === currentFilter);
+
+  // Stats
+  const todayStr2 = new Date().toISOString().slice(0,10);
+  const sevenDays = new Date(); sevenDays.setDate(sevenDays.getDate()+7);
+  const sevenStr = sevenDays.toISOString().slice(0,10);
+  document.getElementById('stat-total').textContent = allBookings.length;
+  document.getElementById('stat-today').textContent = allBookings.filter(b => b.date === todayStr2).length;
+  document.getElementById('stat-upcoming').textContent = allBookings.filter(b => b.date >= todayStr2 && b.date <= sevenStr && b.status !== 'cancelled').length;
+
+  if (filtered.length === 0) {
+    document.getElementById('bookings-container').innerHTML =
+      '<div class="empty-state">目前沒有預約記錄</div>';
+    return;
+  }
+
+  const sorted = [...filtered].sort((a,b) => a.date < b.date ? 1 : -1);
+  const html = sorted.map(b => {
+    const color = SPACES[b.space]?.color || '#888';
+    const isCancelled = b.status === 'cancelled';
+    return `
+      <div class="booking-card">
+        <div class="bc-accent" style="background:${color}"></div>
+        <div class="bc-info">
+          <div class="bc-space" style="color:${color}">${b.spaceName}</div>
+          <div class="bc-name">${b.name}</div>
+          <div class="bc-date">📅 ${b.date} ・ 👥 ${b.personCount} 人</div>
+          <div class="bc-details">${b.unit ? b.unit + ' ・ ' : ''}${b.phone}${b.email ? ' ・ ' + b.email : ''}${b.note ? '<br>備注：' + b.note : ''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;">
+          <span class="bc-status ${isCancelled ? 'status-cancelled' : 'status-confirmed'}">
+            ${isCancelled ? '已取消' : '已確認'}
+          </span>
+          ${!isCancelled ? `<button class="bc-cancel" onclick="cancelBooking('${b.id}')">取消</button>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('bookings-container').innerHTML = `<div class="booking-list">${html}</div>`;
+}
+
+function filterBookings(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBookings();
+}
+
+async function cancelBooking(id) {
+  if (!confirm('確定要取消這筆預約？')) return;
+
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=cancel&id=${encodeURIComponent(id)}`);
+    const result = await res.json();
+    if (result.success) {
+      await loadBookings();
+      showToast('已取消預約');
+    } else {
+      showToast(result.error || '操作失敗', true);
+    }
+  } catch(e) {
+    showToast('操作失敗', true);
+  }
+}
+
+async function queryBooking() {
+  const phone = document.getElementById('q-phone').value.trim();
+  const email = document.getElementById('q-email').value.trim();
+  const result = document.getElementById('query-result');
+
+  if (!phone) return showToast('請填寫聯絡電話', true);
+  if (!email) return showToast('請填寫 Email', true);
+
+  result.innerHTML = '<div class="loading"><span class="spinner"></span>查詢中…</div>';
+
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=query&phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}`);
+    const bookings = await res.json();
+
+    if (!Array.isArray(bookings) || bookings.length === 0) {
+      result.innerHTML = `
+        <div class="query-empty">
+          <div class="qe-icon">◎</div>
+          查無符合的預約記錄<br>請確認電話與 Email 是否正確
+        </div>`;
+      return;
+    }
+
+    const sorted = [...bookings].sort((a,b) => a.date < b.date ? 1 : -1);
+    const html = sorted.map(b => {
+      const sp = SPACES[b.space] || {};
+      const color = sp.color || 'var(--muted)';
+      const isCancelled = b.status === 'cancelled';
+      return `
+        <div class="query-card">
+          <div class="qc-accent" style="background:${color}"></div>
+          <div class="qc-body">
+            <div class="qc-space" style="color:${color}">${b.spaceName}</div>
+            <div class="qc-date">📅 ${b.date}</div>
+            <div class="qc-row">👥 ${b.personCount} 人</div>
+            <div class="qc-row">👤 ${b.name}</div>
+            ${b.unit  ? `<div class="qc-row">🏢 ${b.unit}</div>`  : ''}
+            <div class="qc-row">📞 ${b.phone}</div>
+            ${b.email ? `<div class="qc-row">✉️ ${b.email}</div>` : ''}
+            ${b.note  ? `<div class="qc-row">📝 ${b.note}</div>`  : ''}
+            <span class="qc-status ${isCancelled ? 'status-cancelled' : 'status-confirmed'}">
+              ${isCancelled ? '已取消' : '已確認'}
+            </span>
+          </div>
+        </div>`;
+    }).join('');
+
+    result.innerHTML = `<div style="margin-top:0.5rem">${html}</div>`;
+  } catch(e) {
+    result.innerHTML = '<div class="query-empty">查詢失敗，請稍後再試</div>';
+  }
+}
+
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 2800);
+}
+
+function showSetupGuide() {
+  alert(`Google Apps Script 設定步驟：
+
+1. 開啟 Google Sheets，建立新試算表
+   欄位：時間戳記、空間、日期、人數、姓名、電話、Email、備注、狀態
+
+2. 點選「擴充功能 > Apps Script」
+
+3. 貼入後端程式碼（請向 AI 請求完整程式碼）
+
+4. 部署為「網頁應用程式」
+   - 執行身分：我
+   - 存取權限：任何人
+
+5. 複製部署網址，貼回本頁 SCRIPT_URL`);
+}
+</script>
+</body>
+</html>
