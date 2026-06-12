@@ -483,6 +483,163 @@
   .stat-num { font-size: 1.4rem; font-weight: 500; color: var(--ink); }
   .stat-label { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.05em; margin-top: 0.2rem; }
 
+  /* VIEW TOGGLE */
+  .view-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .view-toggle button {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: white;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 0.8rem;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .view-toggle button.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  /* CALENDAR VIEW */
+  .calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+  .calendar-nav button {
+    width: 32px; height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink);
+    transition: all 0.15s;
+  }
+  .calendar-nav button:hover { border-color: var(--warm); background: var(--warm-light); }
+  .calendar-nav h3 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+  }
+  .calendar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+  .calendar-legend span { display: inline-flex; align-items: center; gap: 0.3rem; }
+  .calendar-legend .cd-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+  .calendar-weekday {
+    text-align: center;
+    font-size: 0.68rem;
+    color: var(--muted);
+    padding: 0.3rem 0;
+    letter-spacing: 0.05em;
+  }
+  .calendar-day {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: white;
+    padding: 0.3rem;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    min-height: 76px;
+  }
+  .calendar-day:hover { border-color: var(--warm); background: var(--warm-light); }
+  .calendar-day.empty { background: transparent; border: none; cursor: default; }
+  .calendar-day.empty:hover { background: transparent; }
+  .calendar-day.today { border-color: var(--warm); border-width: 2px; }
+  .calendar-day .cd-num {
+    font-size: 1rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .calendar-day.today .cd-num { color: var(--warm-dark); font-weight: 600; }
+  .cd-items {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 0.2rem;
+  }
+  .cd-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.95rem;
+    line-height: 1.25;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .cd-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* DAY DETAIL MODAL */
+  .day-modal-overlay {
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(26,20,16,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+  }
+  .day-modal-overlay.show { display: flex; }
+  .day-modal {
+    background: var(--paper);
+    border-radius: 12px;
+    max-width: 480px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 1.25rem;
+  }
+  .day-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .day-modal-header h3 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 1.05rem;
+    font-weight: 500;
+  }
+  .day-modal-close {
+    border: none;
+    background: none;
+    font-size: 1.3rem;
+    cursor: pointer;
+    color: var(--muted);
+    line-height: 1;
+  }
+
   /* TOAST */
   .toast {
     position: fixed;
@@ -709,18 +866,49 @@
         <div class="stat-card"><div class="stat-num" id="stat-upcoming">—</div><div class="stat-label">未來 7 天</div></div>
       </div>
 
-      <div class="filter-bar">
-        <button class="filter-btn active" onclick="filterBookings('all',this)">全部</button>
-        <button class="filter-btn" onclick="filterBookings('roomA',this)">房間 A</button>
-        <button class="filter-btn" onclick="filterBookings('roomB',this)">房間 B</button>
-        <button class="filter-btn" onclick="filterBookings('office',this)">辦公空間</button>
-        <button class="refresh-btn" onclick="loadBookings()">↻ 重新整理</button>
+      <div class="view-toggle">
+        <button class="active" id="view-btn-list" onclick="switchView('list')">☰ 列表檢視</button>
+        <button id="view-btn-calendar" onclick="switchView('calendar')">▦ 月曆檢視</button>
       </div>
 
-      <div id="bookings-container">
-        <div class="loading"><span class="spinner"></span>載入中…</div>
+      <div id="list-view">
+        <div class="filter-bar">
+          <button class="filter-btn active" onclick="filterBookings('all',this)">全部</button>
+          <button class="filter-btn" onclick="filterBookings('roomA',this)">房間 A</button>
+          <button class="filter-btn" onclick="filterBookings('roomB',this)">房間 B</button>
+          <button class="filter-btn" onclick="filterBookings('office',this)">辦公空間</button>
+          <button class="refresh-btn" onclick="loadBookings()">↻ 重新整理</button>
+        </div>
+
+        <div id="bookings-container">
+          <div class="loading"><span class="spinner"></span>載入中…</div>
+        </div>
+      </div>
+
+      <div id="calendar-view" style="display:none;">
+        <div class="calendar-nav">
+          <button onclick="changeCalendarMonth(-1)">‹</button>
+          <h3 id="calendar-title"></h3>
+          <button onclick="changeCalendarMonth(1)">›</button>
+        </div>
+        <div class="calendar-legend">
+          <span><span class="cd-dot" style="background:var(--room-a)"></span>一樓房間</span>
+          <span><span class="cd-dot" style="background:var(--room-b)"></span>二樓房間</span>
+          <span><span class="cd-dot" style="background:var(--office)"></span>共享辦公空間</span>
+        </div>
+        <div class="calendar-grid" id="calendar-grid"></div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="day-modal-overlay" id="day-modal-overlay" onclick="if(event.target===this)closeDayModal()">
+  <div class="day-modal">
+    <div class="day-modal-header">
+      <h3 id="day-modal-title"></h3>
+      <button class="day-modal-close" onclick="closeDayModal()">×</button>
+    </div>
+    <div id="day-modal-body"></div>
   </div>
 </div>
 
@@ -744,6 +932,8 @@ let selectedSpace = null;
 let personCount = 1;
 let allBookings = [];
 let currentFilter = 'all';
+let currentView = 'list';
+let calendarDate = new Date();
 
 // Init date — 最早可選後天
 const today = new Date();
@@ -958,6 +1148,7 @@ async function loadBookings() {
     const res = await fetch(`${SCRIPT_URL}?action=list`);
     allBookings = await res.json();
     renderBookings();
+    renderCalendar();
   } catch(e) {
     document.getElementById('bookings-container').innerHTML =
       '<div class="empty-state">載入失敗，請檢查 API 設定</div>';
@@ -1013,6 +1204,111 @@ function filterBookings(filter, btn) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderBookings();
+}
+
+function switchView(view) {
+  currentView = view;
+  document.getElementById('view-btn-list').classList.toggle('active', view === 'list');
+  document.getElementById('view-btn-calendar').classList.toggle('active', view === 'calendar');
+  document.getElementById('list-view').style.display = view === 'list' ? 'block' : 'none';
+  document.getElementById('calendar-view').style.display = view === 'calendar' ? 'block' : 'none';
+  if (view === 'calendar') renderCalendar();
+}
+
+function changeCalendarMonth(delta) {
+  calendarDate.setMonth(calendarDate.getMonth() + delta);
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const year = calendarDate.getFullYear();
+  const month = calendarDate.getMonth(); // 0-indexed
+  document.getElementById('calendar-title').textContent = `${year} 年 ${month + 1} 月`;
+
+  // 將有效預約依日期分組
+  const byDate = {};
+  allBookings.forEach(b => {
+    if (b.status === 'cancelled') return;
+    (byDate[b.date] = byDate[b.date] || []).push(b);
+  });
+
+  const todayStr = new Date().toISOString().slice(0,10);
+  const firstDay = new Date(year, month, 1);
+  const startWeekday = firstDay.getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const weekdays = ['日','一','二','三','四','五','六'];
+  let html = weekdays.map(w => `<div class="calendar-weekday">${w}</div>`).join('');
+
+  for (let i = 0; i < startWeekday; i++) {
+    html += `<div class="calendar-day empty"></div>`;
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${pad(month+1)}-${pad(d)}`;
+    const dayBookings = byDate[dateStr] || [];
+    const isToday = dateStr === todayStr;
+
+    const items = dayBookings.map(b => {
+      const color = SPACES[b.space]?.color || '#888';
+      return `<div class="cd-item"><span class="cd-dot" style="background:${color}"></span>${b.name}</div>`;
+    }).join('');
+
+    html += `
+      <div class="calendar-day${isToday ? ' today' : ''}" onclick="openDayModal('${dateStr}')">
+        <div class="cd-num">${d}</div>
+        <div class="cd-items">${items}</div>
+      </div>`;
+  }
+
+  document.getElementById('calendar-grid').innerHTML = html;
+}
+
+function openDayModal(dateStr) {
+  const dayBookings = allBookings.filter(b => b.date === dateStr)
+    .sort((a,b) => a.status === 'cancelled' ? 1 : -1);
+
+  document.getElementById('day-modal-title').textContent = dateStr;
+
+  if (dayBookings.length === 0) {
+    document.getElementById('day-modal-body').innerHTML =
+      '<div class="empty-state">這天目前沒有預約</div>';
+  } else {
+    const html = dayBookings.map(b => {
+      const color = SPACES[b.space]?.color || '#888';
+      const isCancelled = b.status === 'cancelled';
+      return `
+        <div class="booking-card">
+          <div class="bc-accent" style="background:${color}"></div>
+          <div class="bc-info">
+            <div class="bc-space" style="color:${color}">${b.spaceName}</div>
+            <div class="bc-name">${b.name}</div>
+            <div class="bc-date">👥 ${b.personCount} 人</div>
+            <div class="bc-details">${b.unit ? b.unit + ' ・ ' : ''}${b.phone}${b.email ? ' ・ ' + b.email : ''}${b.note ? '<br>備注：' + b.note : ''}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;">
+            <span class="bc-status ${isCancelled ? 'status-cancelled' : 'status-confirmed'}">
+              ${isCancelled ? '已取消' : '已確認'}
+            </span>
+            ${!isCancelled ? `<button class="bc-cancel" onclick="cancelBookingFromModal('${b.id}')">取消</button>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+    document.getElementById('day-modal-body').innerHTML = `<div class="booking-list">${html}</div>`;
+  }
+
+  document.getElementById('day-modal-overlay').classList.add('show');
+}
+
+function closeDayModal() {
+  document.getElementById('day-modal-overlay').classList.remove('show');
+}
+
+async function cancelBookingFromModal(id) {
+  const dateStr = document.getElementById('day-modal-title').textContent;
+  await cancelBooking(id);
+  renderCalendar();
+  openDayModal(dateStr);
 }
 
 async function cancelBooking(id) {
@@ -1111,4 +1407,3 @@ function showSetupGuide() {
 </script>
 </body>
 </html>
- 
